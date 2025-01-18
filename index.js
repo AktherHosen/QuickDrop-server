@@ -37,6 +37,25 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+
+      try {
+        if (!email) {
+          return res.status(400).send({ message: "Email is required" });
+        }
+
+        const user = await usersCollection.findOne({ email });
+        if (user) {
+          res.send(user);
+        } else {
+          res.status(404).send({ message: "User not found" });
+        }
+      } catch (error) {
+        res.status(500).send({ message: "Server error" });
+      }
+    });
+
     app.put("/user", async (req, res) => {
       const user = req.body;
       const query = { email: user?.email };
