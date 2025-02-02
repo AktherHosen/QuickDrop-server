@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 require("dotenv").config();
 
@@ -9,10 +9,14 @@ const port = process.env.POST || 5000;
 app.use(express.json());
 
 const cors = require("cors");
+
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: "http://localhost:5173",
   credentials: true,
+  methods: "GET,POST,PUT,DELETE,OPTIONS",
+  allowedHeaders: "Content-Type, Authorization",
 };
+
 app.use(cors(corsOptions));
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.bmhyihx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -85,6 +89,34 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    app.patch("/user/:id", async (req, res) => {
+      console.log("PATCH request received!");
+      console.log("Params:", req.params);
+      console.log("Body:", req.body);
+
+      const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid user ID format" });
+      }
+
+      const { role } = req.body;
+      if (!role) {
+        return res.status(400).json({ message: "Role is required" });
+      }
+
+      const query = { _id: new ObjectId(id) };
+      console.log("Query:", query);
+      const user = await usersCollection.findOne(query);
+      const updateDoc = {
+        $set: { role },
+      };
+
+      const result = await usersCollection.updateOne(user, updateDoc);
+      console.log("MongoDB Result:", result);
+
       res.send(result);
     });
 
